@@ -37,21 +37,25 @@ var RevealChalkboard = window.RevealChalkboard || (function(){
 	var config = Reveal.getConfig().chalkboard || {};
 
 	var background, pen, draw, color;
+	var penColors = [ 'rgba(255,0,0,1)', 'rgba(0,255,0,1)', 'rgba(0,0,255,1)'];
 	var theme = config.theme || "chalkboard"; 
+	var colorNumber = 2;
+	var colorButtons;
+	
 	switch ( theme ) {
 		case "whiteboard":
 			background = [ 'rgba(127,127,127,.1)' , path + 'img/whiteboard.png' ];
 			pen = [ 'url(' + path + 'img/boardmarker.png), auto',
 				'url(' + path + 'img/boardmarker.png), auto' ];
 			draw = [ drawWithPen , drawWithPen ];
-			color = [ 'rgba(0,0,255,1)', 'rgba(0,0,255,1)' ];
+			color = [ penColors[colorNumber], penColors[colorNumber] ];
 			break;
 		default:
 			background = [ 'rgba(127,127,127,.1)' , path + 'img/blackboard.png' ];
 			pen = [ 'url(' + path + 'img/boardmarker.png), auto',
 				'url(' + path + 'img/chalk.png), auto' ];
 			draw = [ drawWithPen , drawWithChalk ];
-			color = [ 'rgba(0,0,255,1)', 'rgba(255,255,255,0.5)'  ];
+			color = [ penColors[colorNumber], 'rgba(255,255,255,0.5)'  ];
 	}
 	
 	if ( config.background ) background = config.background;
@@ -59,8 +63,10 @@ var RevealChalkboard = window.RevealChalkboard || (function(){
 	if ( config.draw ) draw = config.draw;
 	if ( config.color ) color = config.color;
 
+
 	var toggleChalkboardButton = config.toggleChalkboardButton == undefined ? true : config.toggleChalkboardButton;
 	var toggleNotesButton = config.toggleNotesButton == undefined ? true : config.toggleNotesButton;
+	var toggleColorButton = config.toggleColorButton == undefined ? true : config.toggleColorButton;
 	var transition = config.transition  || 800;
 
 	var readOnly = config.readOnly;
@@ -99,7 +105,7 @@ var RevealChalkboard = window.RevealChalkboard || (function(){
 		button.style.top = toggleChalkboardButton.top ||  "auto";
 		button.style.right = toggleChalkboardButton.right ||  "auto";
 
-		button.innerHTML = '<a href="#" onclick="RevealChalkboard.toggleChalkboard(); return false;"><i class="fa fa-pencil-square-o"></i></a>'
+		button.innerHTML = '<a href="#" onclick="RevealChalkboard.toggleChalkboard(); return false;"><i class="fas fa-chalkboard"></i></a>'
 		document.querySelector(".reveal").appendChild( button );
 	}
 	if ( toggleNotesButton ) {
@@ -116,9 +122,26 @@ var RevealChalkboard = window.RevealChalkboard || (function(){
 		button.style.top = toggleNotesButton.top ||  "auto";
 		button.style.right = toggleNotesButton.right ||  "auto";
 
-		button.innerHTML = '<a href="#" onclick="RevealChalkboard.toggleNotesCanvas(); return false;"><i class="fa fa-pencil"></i></a>'
+		button.innerHTML = '<a href="#" onclick="RevealChalkboard.toggleNotesCanvas(); return false;"><i class="fas fa-edit"></i></a>'
 		document.querySelector(".reveal").appendChild( button );
 	}
+	if ( toggleColorButton ) {
+		colorButtons = document.createElement( 'div' );
+		colorButtons.className = "chalkboard-button";
+		colorButtons.id = "toggle-color";
+		colorButtons.style.position = "absolute";
+		colorButtons.style.zIndex = 30;
+		colorButtons.style.fontSize = "24px";
+		colorButtons.style.visibility = "hidden";
+		colorButtons.style.left = toggleColorButton.left || "110px";
+		colorButtons.style.bottom = toggleColorButton.bottom ||  "30px";
+		colorButtons.style.top = toggleColorButton.top ||  "auto";
+		colorButtons.style.right = toggleColorButton.right ||  "auto";
+
+		colorButtons.innerHTML = '<a href="#" onclick="RevealChalkboard.changeColor(); return false;"><i class="fas fa-edit"></i></a>'
+		document.querySelector(".reveal").appendChild( colorButtons );
+	}
+	
 //alert("Buttons");
 
 	var drawingCanvas = [ {id: "notescanvas" }, {id: "chalkboard" } ];
@@ -492,6 +515,11 @@ console.log( 'Create printout for slide ' + storage[1].data[i].slide.h + "." + s
 		drawingCanvas[1].sponge.style.visibility = "hidden"; // make sure that the sponge from touch events is hidden
 		drawingCanvas[1].container.classList.add( 'visible' );
 		mode = 1;
+		
+		if (theme == "whiteboard") {
+			colorButtons.style.visibility = 'visible';
+		}
+		
 		// broadcast
 		var message = new CustomEvent('send');
 		message.content = { sender: 'chalkboard-plugin', type: 'showChalkboard' };
@@ -512,6 +540,11 @@ console.log( 'Create printout for slide ' + storage[1].data[i].slide.h + "." + s
 		yLast = null;
 		event = null;
 		mode = 0;
+		
+		if (theme == "whiteboard") {
+			colorButtons.style.visibility = 'hidden';
+		}
+		
 		// broadcast
 		var message = new CustomEvent('send');
 		message.content = { sender: 'chalkboard-plugin', type: 'closeChalkboard' };
@@ -716,7 +749,6 @@ console.log( 'Create printout for slide ' + storage[1].data[i].slide.h + "." + s
 			case "erase":
 				eraseCurve( id, event, timestamp );
 				break;
-
 		}
 	};
 
@@ -726,7 +758,7 @@ console.log( 'Create printout for slide ' + storage[1].data[i].slide.h + "." + s
 			var scale = drawingCanvas[id].scale;
 			var xOffset = drawingCanvas[id].xOffset;
 			var yOffset = drawingCanvas[id].yOffset;
-
+			color[0] = penColors[event.color];
 			var stepDuration = ( event.end - event.begin )/ ( event.curve.length - 1 );
 //console.log("---");
 			for (var i = 1; i < event.curve.length; i++) {
@@ -781,6 +813,7 @@ console.log( 'Create printout for slide ' + storage[1].data[i].slide.h + "." + s
 			var scale = drawingCanvas[mode].scale;
 			var xOffset = drawingCanvas[mode].xOffset;
 			var yOffset = drawingCanvas[mode].yOffset;
+			
 			xLast = x * scale + xOffset;
 			yLast = y * scale + yOffset;
 			if ( erase == true) {
@@ -789,7 +822,7 @@ console.log( 'Create printout for slide ' + storage[1].data[i].slide.h + "." + s
 				eraseWithSponge(ctx, x * scale + xOffset, y * scale + yOffset);
 			}
 			else {
-				event = { type: "draw", begin: Date.now() - slideStart, end: null, curve: [{x: x, y: y}] };
+				event = { type: "draw", color: colorNumber, begin: Date.now() - slideStart, end: null, curve: [{x: x, y: y}] };
 			}		
 	}
 
@@ -833,6 +866,7 @@ console.log( 'Create printout for slide ' + storage[1].data[i].slide.h + "." + s
 	}
 
 	function stopDrawing() {
+
 		if ( event ) {
 			event.end = Date.now() - slideStart;
 			if ( event.type == "erase" || event.curve.length > 1 ) {
@@ -1179,6 +1213,16 @@ console.log( 'Create printout for slide ' + storage[1].data[i].slide.h + "." + s
 		startPlayback( getSlideDuration(), 0 );
 	});
 
+	function changeColor( colNum ) {
+		colorNumber = colNum;
+		/*
+		colorNumber += 1;
+		if ( colorNumber > 2 )
+			colorNumber = 0;
+		*/
+		color[0] = penColors[colorNumber];
+	};
+
 	function toggleNotesCanvas() {
 		if ( !readOnly ) {
 			if ( mode == 1 ) {
@@ -1188,11 +1232,13 @@ console.log( 'Create printout for slide ' + storage[1].data[i].slide.h + "." + s
 			}
 			else {
 				if ( notescanvas.style.pointerEvents != "none" ) {
+					colorButtons.style.visibility = "hidden";
 					event = null;
 					notescanvas.style.background = 'rgba(0,0,0,0)';
 					notescanvas.style.pointerEvents = "none";
 				}
 				else {
+					colorButtons.style.visibility = "visible";
 					notescanvas.style.background = background[0]; //'rgba(255,0,0,0.5)';
 					notescanvas.style.pointerEvents = "auto";
 				}
@@ -1279,6 +1325,7 @@ console.log( 'Create printout for slide ' + storage[1].data[i].slide.h + "." + s
 
 	this.drawWithPen = drawWithPen;
 	this.drawWithChalk = drawWithChalk;
+	this.changeColor = changeColor;
 	this.toggleNotesCanvas = toggleNotesCanvas;
 	this.toggleChalkboard = toggleChalkboard;
 	this.startRecording = startRecording;
