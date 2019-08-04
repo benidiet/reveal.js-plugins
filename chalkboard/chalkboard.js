@@ -127,18 +127,23 @@ var RevealChalkboard = window.RevealChalkboard || (function(){
 	}
 	if ( toggleColorButton ) {
 		colorButtons = document.createElement( 'div' );
-		colorButtons.className = "chalkboard-button";
-		colorButtons.id = "toggle-color";
-		colorButtons.style.position = "absolute";
+		colorButtons.className = "color-button-group";
 		colorButtons.style.zIndex = 30;
-		colorButtons.style.fontSize = "24px";
-		colorButtons.style.visibility = "hidden";
-		colorButtons.style.left = toggleColorButton.left || "110px";
-		colorButtons.style.bottom = toggleColorButton.bottom ||  "30px";
-		colorButtons.style.top = toggleColorButton.top ||  "auto";
-		colorButtons.style.right = toggleColorButton.right ||  "auto";
 
-		colorButtons.innerHTML = '<a href="#" onclick="RevealChalkboard.changeColor(); return false;"><i class="fas fa-edit"></i></a>'
+		for (i=0; i < 3; i++) {
+			var colorButton = document.createElement( 'button' );
+			colorButton.classList.add("color-button");	
+			colorButton.style.backgroundColor = penColors[i];
+			colorButton.addEventListener("click",
+				function(color) {
+					return function() {
+						changeColor(color);
+						return false;
+					}
+				}(i), false );
+			colorButtons.appendChild(colorButton);
+		}
+		
 		document.querySelector(".reveal").appendChild( colorButtons );
 	}
 	
