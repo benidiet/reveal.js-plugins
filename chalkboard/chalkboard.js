@@ -18,11 +18,37 @@
 window.RevealChalkboard = window.RevealChalkboard || {
     id: 'RevealChalkboard',
     init: function (deck) {
-        initialize(deck);
+		initialize(deck);
     }
 };
 
 const initialize = function (Reveal) {
+
+	/* adding shortcuts */
+	Reveal.addKeyBinding( {keyCode: 49, key: '1', description: 'Set chalkboard Color to red'}, () => {
+		changeColor(0);
+	});
+	Reveal.addKeyBinding( {keyCode: 50, key: '2', description: 'Set chalkboard color to green'}, () => {
+		changeColor(1);
+	});
+	Reveal.addKeyBinding( {keyCode: 51, key: '3', description: 'Set chalkboard color to blue'}, () => {
+		changeColor(2);
+	});
+	Reveal.addKeyBinding( {keyCode: 67, key: 'c', description: 'toggle notes canvas'}, () => {
+		toggleNotesCanvas();
+	});
+	Reveal.addKeyBinding( {keyCode: 66, key: 'b', description: 'toggle chalkboard canvas'}, () => {
+		toggleChalkboard();
+	});
+	Reveal.addKeyBinding( {keyCode: 46, key: 'DEL', description: 'clear chalkboard'}, () => {
+		clear();
+	});
+	Reveal.addKeyBinding( {keyCode: 8, key: 'DEL', description: 'clear chalkboard'}, () => {
+		reset();
+	});
+	Reveal.addKeyBinding( {keyCode: 68, key: 'd', description: 'download recorded chalkboard drawing'}, () => {
+		download();
+	});
 
     var path = scriptPath();
 	function scriptPath() {
